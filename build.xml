@@ -1,0 +1,62 @@
+<project default="build" xmlns:jacoco="antlib:org.jacoco.ant" xmlns:checkstyle="antlib:org.apache.tools.ant.taskdefs.optional.checkstyle">
+
+    <!-- Property to specify the location of third-party libraries -->
+    <property name="lib.dir" value="lib"/>
+
+    <!-- Task definitions for JaCoCo and Checkstyle -->
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml" classpath="${lib.dir}/jacocoant.jar"/>
+    <taskdef resource="checkstyletask.properties" classpath="${lib.dir}/checkstyle.jar"/>
+
+    <!-- Define the target to compile the source code -->
+    <target name="compile">
+        <mkdir dir="build/classes"/>
+        <javac srcdir="src" destdir="build/classes" includeantruntime="false"/>
+    </target>
+
+    <!-- Define the target to run tests with JaCoCo coverage -->
+    <target name="test" depends="compile">
+        <mkdir dir="build/test-reports"/>
+        <jacoco:coverage enabled="true" destfile="build/jacoco.exec">
+            <junit printsummary="yes" haltonfailure="yes" fork="true" forkmode="once">
+                <classpath>
+                    <pathelement path="build/classes"/>
+                    <pathelement path="${lib.dir}/junit.jar"/>
+                </classpath>
+                <formatter type="xml"/>
+                <formatter type="plain"/>
+                <batchtest todir="build/test-reports">
+                    <fileset dir="test" includes="**/*Test*.java"/>
+                </batchtest>
+            </junit>
+        </jacoco:coverage>
+    </target>
+
+    <!-- Define the target to generate JaCoCo coverage report -->
+    <target name="jacoco-report" depends="test">
+        <jacoco:report>
+            <executiondata>
+                <file file="build/jacoco.exec"/>
+            </executiondata>
+            <structure name="Project Name">
+                <classfiles>
+                    <fileset dir="build/classes"/>
+                </classfiles>
+                <sourcefiles>
+                    <fileset dir="src"/>
+                </sourcefiles>
+            </structure>
+            <html destdir="build/jacoco-report"/>
+        </jacoco:report>
+    </target>
+
+    <!-- Define the target to run Checkstyle -->
+    <target name="checkstyle">
+        <checkstyle:checkstyle config="checkstyle.xml">
+            <fileset dir="src"/>
+        </checkstyle:checkstyle>
+    </target>
+
+    <!-- Define the default target -->
+    <target name="build" depends="compile,test,jacoco-report,checkstyle"/>
+
+</project>
